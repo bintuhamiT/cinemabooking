@@ -7,6 +7,8 @@ import BookingModal from './components/BookingModal'
 import SearchFilter from './components/SearchFilter'
 import LoadingSpinner from './components/LoadingSpinner'
 import SuccessModal from './components/SuccessModal'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './components/accordion'
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './components/alert-dialog'
 import { movies } from './data/movies'
 import './App.css'
 import './styles/custom.css'
@@ -18,6 +20,8 @@ function App() {
   const [bookingDetails, setBookingDetails] = useState(null)
   const [filteredMovies, setFilteredMovies] = useState(movies)
   const [isLoading, setIsLoading] = useState(true)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [pendingBookingDetails, setPendingBookingDetails] = useState(null)
 
   // Simulate loading
   useEffect(() => {
@@ -37,10 +41,22 @@ function App() {
     setSelectedMovie(null)
   }
 
-  const handleBookingSuccess = (details) => {
-    setBookingDetails(details)
+  const handleBookingSubmit = (details) => {
+    setPendingBookingDetails(details)
+    setIsConfirmDialogOpen(true)
+  }
+
+  const handleBookingConfirm = () => {
+    setBookingDetails(pendingBookingDetails)
     setIsBookingModalOpen(false)
+    setIsConfirmDialogOpen(false)
     setIsSuccessModalOpen(true)
+    setPendingBookingDetails(null)
+  }
+
+  const handleBookingCancel = () => {
+    setIsConfirmDialogOpen(false)
+    setPendingBookingDetails(null)
   }
 
   const handleSearch = (searchTerm) => {
@@ -124,7 +140,14 @@ function App() {
       {/* Search and Filter Section */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <SearchFilter onSearch={handleSearch} onFilter={handleFilter} />
+          <Accordion type="single" collapsible>
+            <AccordionItem value="filters">
+              <AccordionTrigger>تصفية الأفلام</AccordionTrigger>
+              <AccordionContent>
+                <SearchFilter onSearch={handleSearch} onFilter={handleFilter} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
       
@@ -172,7 +195,7 @@ function App() {
         movie={selectedMovie}
         isOpen={isBookingModalOpen}
         onClose={handleCloseModal}
-        onSuccess={handleBookingSuccess}
+        onSuccess={handleBookingSubmit}
       />
 
       {/* Success Modal */}
@@ -181,6 +204,22 @@ function App() {
         onClose={() => setIsSuccessModalOpen(false)}
         bookingDetails={bookingDetails}
       />
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحجز</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من رغبتك في حجز تذكرة لفيلم "{selectedMovie?.title}"؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleBookingCancel}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBookingConfirm}>تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
